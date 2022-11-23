@@ -1,0 +1,308 @@
+# Laravel はじめの一歩（`artisan`コマンド,マイグレーション）
+
+## `artisan`コマンド
+
+### `artisan` コマンド一覧
+
+- `artisan list` で arisan コマンドの一覧を確認できる
+  - Laravel Sail を利用している場合は `sail artisan list`
+
+<details>
+<summary>sail artisan list</summary>
+
+```
+Laravel Framework 9.34.0
+
+Usage:
+  command [options] [arguments]
+
+Options:
+  -h, --help            Display help for the given command. When no command is given display help for the list command
+  -q, --quiet           Do not output any message
+  -V, --version         Display this application version
+      --ansi|--no-ansi  Force (or disable --no-ansi) ANSI output
+  -n, --no-interaction  Do not ask any interactive question
+      --env[=ENV]       The environment the command should run under
+  -v|vv|vvv, --verbose  Increase the verbosity of messages: 1 for normal output, 2 for more verbose output and 3 for debug
+
+Available commands:
+  about                  Display basic information about your application
+  clear-compiled         Remove the compiled class file
+  completion             Dump the shell completion script
+  db                     Start a new database CLI session
+  docs                   Access the Laravel documentation
+  down                   Put the application into maintenance / demo mode
+  env                    Display the current framework environment
+  help                   Display help for a command
+  inspire                Display an inspiring quote
+  list                   List commands
+  migrate                Run the database migrations
+  optimize               Cache the framework bootstrap files
+  serve                  Serve the application on the PHP development server
+  test                   Run the application tests
+  tinker                 Interact with your application
+  up                     Bring the application out of maintenance mode
+ auth
+  auth:clear-resets      Flush expired password reset tokens
+ cache
+  cache:clear            Flush the application cache
+  cache:forget           Remove an item from the cache
+  cache:table            Create a migration for the cache database table
+ config
+  config:cache           Create a cache file for faster configuration loading
+  config:clear           Remove the configuration cache file
+ db
+  db:monitor             Monitor the number of connections on the specified database
+  db:seed                Seed the database with records
+  db:show                Display information about the given database
+  db:table               Display information about the given database table
+  db:wipe                Drop all tables, views, and types
+ env
+  env:decrypt            Decrypt an environment file
+  env:encrypt            Encrypt an environment file
+ event
+  event:cache            Discover and cache the application's events and listeners
+  event:clear            Clear all cached events and listeners
+  event:generate         Generate the missing events and listeners based on registration
+  event:list             List the application's events and listeners
+ key
+  key:generate           Set the application key
+ make
+  make:cast              Create a new custom Eloquent cast class
+  make:channel           Create a new channel class
+  make:command           Create a new Artisan command
+  make:component         Create a new view component class
+  make:controller        Create a new controller class
+  make:event             Create a new event class
+  make:exception         Create a new custom exception class
+  make:factory           Create a new model factory
+  make:job               Create a new job class
+  make:listener          Create a new event listener class
+  make:mail              Create a new email class
+  make:middleware        Create a new middleware class
+  make:migration         Create a new migration file
+  make:model             Create a new Eloquent model class
+  make:notification      Create a new notification class
+  make:observer          Create a new observer class
+  make:policy            Create a new policy class
+  make:provider          Create a new service provider class
+  make:request           Create a new form request class
+  make:resource          Create a new resource
+  make:rule              Create a new validation rule
+  make:scope             Create a new scope class
+  make:seeder            Create a new seeder class
+  make:test              Create a new test class
+ migrate
+  migrate:fresh          Drop all tables and re-run all migrations
+  migrate:install        Create the migration repository
+  migrate:refresh        Reset and re-run all migrations
+  migrate:reset          Rollback all database migrations
+  migrate:rollback       Rollback the last database migration
+  migrate:status         Show the status of each migration
+ model
+  model:prune            Prune models that are no longer needed
+  model:show             Show information about an Eloquent model
+ notifications
+  notifications:table    Create a migration for the notifications table
+ optimize
+  optimize:clear         Remove the cached bootstrap files
+ package
+  package:discover       Rebuild the cached package manifest
+ queue
+  queue:batches-table    Create a migration for the batches database table
+  queue:clear            Delete all of the jobs from the specified queue
+  queue:failed           List all of the failed queue jobs
+  queue:failed-table     Create a migration for the failed queue jobs database table
+  queue:flush            Flush all of the failed queue jobs
+  queue:forget           Delete a failed queue job
+  queue:listen           Listen to a given queue
+  queue:monitor          Monitor the size of the specified queues
+  queue:prune-batches    Prune stale entries from the batches database
+  queue:prune-failed     Prune stale entries from the failed jobs table
+  queue:restart          Restart queue worker daemons after their current job
+  queue:retry            Retry a failed queue job
+  queue:retry-batch      Retry the failed jobs for a batch
+  queue:table            Create a migration for the queue jobs database table
+  queue:work             Start processing jobs on the queue as a daemon
+ route
+  route:cache            Create a route cache file for faster route registration
+  route:clear            Remove the route cache file
+  route:list             List all registered routes
+ sail
+  sail:install           Install Laravel Sail's default Docker Compose file
+  sail:publish           Publish the Laravel Sail Docker files
+ sanctum
+  sanctum:prune-expired  Prune tokens expired for more than specified number of hours.
+ schedule
+  schedule:clear-cache   Delete the cached mutex files created by scheduler
+  schedule:list          List the scheduled commands
+  schedule:run           Run the scheduled commands
+  schedule:test          Run a scheduled command
+  schedule:work          Start the schedule worker
+ schema
+  schema:dump            Dump the given database schema
+ session
+  session:table          Create a migration for the session database table
+ storage
+  storage:link           Create the symbolic links configured for the application
+ stub
+  stub:publish           Publish all stubs that are available for customization
+ vendor
+  vendor:publish         Publish any publishable assets from vendor packages
+ view
+  view:cache             Compile all of the application's Blade templates
+  view:clear             Clear all compiled view files
+```
+
+</details>
+
+## コントローラーの作成(`artisan make:controller`)
+
+`artisan make:controller <コントローラー名>`
+
+- 例：`artisan make:controller HelloController`
+- 指定したコントローラー名（今回の場合は`HelloController`）の PHP ファイルが`app/Http/Controllers`の配下に作成されます。
+
+### コントローラーの作成（メソッドあり）`--resource`
+
+- `artisan make:controller HelloController --resource`
+- コマンドに引数 「 `-–resource` 」を与えると、Web アプリケーションで典型的な操作を行うためのメソッド（初期表示、登録、変更、削除など）があらかじめコントローラーに追加された状態で作成されます。
+
+## モデルの作成(`artisan make:model`)
+
+- [参考：Laravel の make:model をいい感じに使いたい](https://qiita.com/niisan-tokyo/items/9c799989cb535489f201)
+
+### オプション一覧
+
+<details>
+<summary>artisan make:model -h</summary>
+
+```
+Description:
+  Create a new Eloquent model class
+
+Usage:
+make:model [options] [--] <name>
+
+Arguments:
+name The name of the class
+
+Options:
+-a, --all Generate a migration, seeder, factory, policy, resource controller, and form request classes for the model
+-c, --controller Create a new controller for the model
+-f, --factory Create a new factory for the model
+--force Create the class even if the model already exists
+-m, --migration Create a new migration file for the model
+--morph-pivot Indicates if the generated model should be a custom polymorphic intermediate table model
+--policy Create a new policy for the model
+-s, --seed Create a new seeder for the model
+-p, --pivot Indicates if the generated model should be a custom intermediate table model
+-r, --resource Indicates if the generated controller should be a resource controller
+--api Indicates if the generated controller should be an API resource controller
+-R, --requests Create new form request classes and use them in the resource controller
+--test Generate an accompanying PHPUnit test for the Model
+--pest Generate an accompanying Pest test for the Model
+-h, --help Display help for the given command. When no command is given display help for the list command
+-q, --quiet Do not output any message
+-V, --version Display this application version
+--ansi|--no-ansi Force (or disable --no-ansi) ANSI output
+-n, --no-interaction Do not ask any interactive question
+--env[=ENV] The environment the command should run under
+-v|vv|vvv, --verbose Increase the verbosity of messages: 1 for normal output, 2 for more verbose output and 3 for debug
+
+```
+
+</details>
+
+### 基本
+
+`artisan make:model <モデル名>`
+
+- 例：`artisan make:model Hello`
+- `Artisan make:model` コマンドを実行すると、指定したモデル名の PHP ファイル（今回の場合は `Hello.php` ）が `app/Models` の直下に作成されます。
+
+### `-m`: マイグレーションを一緒に作る
+
+### `-f`: ファクトリーを一緒に作る
+
+### `-c`: コントローラを一緒に作る
+
+### `-r`: リソースコントローラも一緒に作る
+
+### `-a`: -m, -f, -r 全部入り
+
+## リクエストの作成（`artisan make:request`）
+
+`artisan make:request <Requestクラス名>`
+
+## マイグレーション
+
+- [参考：PHP フレームワーク『 Laravel 』入門 #4 マイグレーション機能で簡単データベース管理方法](https://knowledge.cpi.ad.jp/howto-cpi/laravel-migration/)
+
+### 概要
+
+- Laravel のマイグレーション機能では、まず migration ファイルという php ファイルを作成して、その中にアプリケーションで利用したいテーブルの定義（カラムの名前・データ型・制約など）を記述します。
+- migration ファイルはデータベースの設計書のようなもので、設計書を記述し終わった後で `Artisan migrate` コマンドを実行すると、Laravel がその内容をもとに自動でデータベースを構成します。
+- その他にも、Laravel のマイグレーション機能にはシーダーやテスト用ダミーデータの自動生成など便利な機能がたくさんある
+- **DB の操作をしたい場合は都度`migrations`ファイルをコマンドで作成する。既存の`migrations`ファイルの内容を更新することはしない**
+
+### マイグレーションファイル（テーブルの操作定義）の作成(`artisan make:migration`)
+
+`artisan make:migration <マイグレーションファイル名> --create=<モデル名>`
+
+- 例：`artisan make:migration create_hello_table --create=hello`
+- `create_hello_table`はマイグレーションファイルの名前で、任意の文字列で OK です。
+- `-create=hello`の`hello`の部分は作成するテーブル名で、モデル名と合わせます。
+- ただし、**モデル名は先頭が大文字**で、**テーブル名は先頭が小文字**になるところにご注意ください。
+- `Artisan make:migration` コマンドを実行すると、マイグレーションファイルが `database/migrations/`の直下に作成されます。
+
+### マイグレーションファイルの実行（`artisan migrate`）
+
+#### 準備
+
+作成されたファイルには、テーブルを作るための `up` メソッドとテーブルを破棄するための `down` メソッドがはじめから用意されています。
+ただ、このままですとカラムが ID とタイムスタンプ（登録、更新日時）しかない状態なので、必要に応じて**カラムの情報を追加**していきます。
+
+`database/migrations/<年月日時分秒>\_create_hello_table.php`
+
+```php
+<?php
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
+
+class CreateHelloTable extends Migration
+{
+  /**
+   * Run the migrations.
+   *
+   * @return void
+   */
+  public function up()
+  {
+    Schema::create('hello', function (Blueprint $table) {
+      $table->bigIncrements('id');
+      $table->timestamps();
+//ここから追加する実装
+      $table->string('str_1');
+      $table->string('str_2');
+//ここまで追加する実装
+    });
+  }
+
+  /**
+   * Reverse the migrations.
+   *
+   * @return void
+   */
+  public function down()
+  {
+    Schema::dropIfExists('hello');
+  }
+}
+```
+
+#### 実行
+
+マイグレーションの実行も Artisan コマンドで行うことができます。
+`artisan migrate`
