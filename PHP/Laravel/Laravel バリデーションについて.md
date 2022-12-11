@@ -7,39 +7,9 @@
 
 ## 概要
 
-- `validate`メソッド
-  - `Illuminate\Http\Request`オブジェクトのメソッド
-- バリデーションルールにパスすると、コードは正常に実行され続けます
-- バリデーションに失敗すると例外が投げられ、適切なエラーレスポンスが自動的にユーザーに返送されます。
-  - `Illuminate\Validation\ValidationException`
-  - HTTP リクエストの場合、バリデーションが失敗した場合、直前の URL への**リダイレクト**レスポンスが生成されます。
-  - 受信リクエストが XHR リクエストの場合、バリデーションエラーメッセージを含む **JSON** レスポンスが返されます。
-
-```php
-/**
- * 新ブログポストの保存
- *
- * @param  \Illuminate\Http\Request  $request
- * @return \Illuminate\Http\Response
- */
-public function store(Request $request)
-{
-    $validated = $request->validate([
-        'title' => 'required|unique:posts|max:255',
-        'body' => 'required',
-    ]);
-
-    // ブログポストは有効
-}
-```
-
-## エラー表示
-
-- バリデーションに失敗した場合、直前の場所へ自動的にリダイレクトを行う
-- すべてのバリデーションエラーとリクエスト入力は自動的にセッションに一時保持されます。
-- `$errors`変数は、ミドルウェアにより、アプリケーションのすべてのビューで共有されます。
-  - `$errors` 変数は `Illuminate\Support\MessageBag` のインスタンスです。このオブジェクトの操作の詳細は、ドキュメントを確認してください。
-    - https://readouble.com/laravel/9.x/ja/validation.html#working-with-error-messages
+- `$request->validate([検証設定の配列]);`
+- `@errors`変数
+  - 条件分岐`@if`などで制御しながらテンプレートを書く必要があり面倒なので、通常は後述の`@error`ディレクティブを利用する
 
 ```php
 <!-- /resources/views/post/create.blade.php -->
@@ -59,6 +29,43 @@ public function store(Request $request)
 <!-- Postフォームの作成 -->
 ```
 
-## エラーメッセージのカスタマイズ
+- `@error`ディレクティブ
 
-Laravel の組み込みバリデーションルールは、それぞれエラーメッセージを持っており、アプリケーションの`lang/ja/validation.php`ファイルに格納しています。このファイルに各バリデーションルールの翻訳エントリーがあります。アプリケーションに合うように、これらメッセージを自由に変更・修正してください。
+```php
+@error
+    $message でメッセージを表示
+@enderror
+```
+
+例文
+
+```php
+<!-- /resources/views/post/create.blade.php -->
+
+<label for="title">Post Title</label>
+
+<input id="title"
+    type="text"
+    name="title"
+    class="@error('title') is-invalid @enderror">
+
+@error('title')
+    <div class="alert alert-danger">{{ $message }}</div>
+@enderror
+```
+
+## バリデーションルール
+
+### 書き方
+
+### 種類
+
+- [使用可能なバリデーションルール](https://readouble.com/laravel/9.x/ja/validation.html#available-validation-rules)
+
+## カスタムバリデーション
+
+### フォームリクエスト
+
+### カスタムメッセージ
+
+### バリデータ(`Validator`)

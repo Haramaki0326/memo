@@ -4,7 +4,45 @@
 
 ## Blade ディレクティブ
 
-- [公式 Blade ディレクティブ](https://readouble.com/laravel/9.x/ja/blade.html#:~:text=%3E%0A%40endverbatim-,Blade%E3%83%87%E3%82%A3%E3%83%AC%E3%82%AF%E3%83%86%E3%82%A3%E3%83%96,-%E3%83%86%E3%83%B3%E3%83%97%E3%83%AC%E3%83%BC%E3%83%88%E3%81%AE%E7%B6%99%E6%89%BF)
+- [公式 Blade ディレクティブ](https://readouble.com/laravel/9.x/ja/blade.html#blade-directives)
+
+### `If文`
+
+#### `@if`
+
+```php
+@if (count($records) === 1)
+    １レコードあります。
+@elseif (count($records) > 1)
+    複数レコードあります。
+@else
+    レコードがありません。
+@endif
+```
+
+#### `@unless`
+
+```php
+@unless (Auth::check())
+    あなたはサインインしていません。
+@endunless
+```
+
+#### `@isset`
+
+```php
+@isset($records)
+    // $recordsが定義済みで、NULLではない…
+@endisset
+```
+
+#### `@empty`
+
+```php
+@empty($records)
+    // $recordsは「空」だ…
+@endempty
+```
 
 ## コンポーネント
 

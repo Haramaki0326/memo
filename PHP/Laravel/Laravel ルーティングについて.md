@@ -122,6 +122,36 @@ Route::get('/users', function (Request $request) {
 
 ## コントローラへのルーティング
 
+### 変更点
+
+Laravel のバージョン 8 で、標準のルーティングの書き方が変わりました。
+基本的な書き方として、処理先のコントローラーを指定するときは、下記のように書いていましたが…
+
+```php
+Route::get('/test/welcome', 'TestController@welcome');
+```
+
+Laravel8 から、このようにコントローラーとメソッドを分けて書くようになっています。第二引数にコントローラを指定します。コントローラは use を使用して参照することを忘れないようにしましょう。コントローラは配列形式で指定し、２要素目はコントローラのメソッドを文字列で指定します。
+
+```php
+use App\Http\Controllers\SampleController;
+
+// SampleControllerのgetJsonメソッドを呼び出しています。
+Route::post('sample', [SampleController::class, 'getJson']);
+```
+
+```php
+Route::get('/test/welcome', [TestController::class, 'welcome']);
+```
+
+シングルコントローラーなら以下のようになる
+
+```php
+Route::get('/test/welcome', TestController::class);
+```
+
+### 概要
+
 ブラウザからどの URL にアクセスした時に、どのコントローラへ処理を渡すかを設定します。コントローラへのルーティングは、以下のように記述します。
 
 ```php
@@ -138,6 +168,29 @@ Route::get('sample/members/1', 'SampleController@member');
 ```
 
 ブラウザから `http://YOUR-DOMAIN/sample/members/1` にアクセスすると、`SampleController` の `member()` メソッドへ処理を渡す。という事になります。
+
+### JSON
+
+JSON を返す方法です。これは WebAPI で必要になる形式ですね。JSON を返す方法は２種類あります。
+
+- １つ目は配列を返す方法
+- ２つ目は Eloquent モデルを返す方法
+
+どちらも Laravel が自動で JSON に変換してくれるので嬉しいですね。
+
+```php
+// 配列を返す
+Route::get('sample', function(){
+    return ['1', '2']
+});
+```
+
+```php
+// Eloquentモデルを返す
+Route::get('user', function(){
+    return App\Models\Article::find(1);
+});
+```
 
 ### URL からパラメータを取得する
 
