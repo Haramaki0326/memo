@@ -231,6 +231,47 @@ public function run(): void
 - [公式](https://fakerphp.github.io/)
 - [FakerPHP 非公式リファレンス](https://fwhy.github.io/faker-docs/)
 
-### 日本語テキスト(`realText()`)
+### 使い方
 
-`Faker\Factory::create('ja_JP')->realText()`
+- [Laravel 公式](https://readouble.com/laravel/9.x/ja/eloquent-factories.html#:~:text=fake%E3%83%98%E3%83%AB%E3%83%91%E3%82%92,%E3%81%A7%E3%81%8D%E3%80%81%E4%BE%BF%E5%88%A9%E3%81%A7%E3%81%99%E3%80%82)の説明にあるとおり、`fake` ヘルパを `Factory` クラスの中で利用する
+- 公式以外のサイトなどで説明している、以下のような書き方は NG
+  - `Faker\Factory::create('ja_JP')->realText()`
+- `config/app.php`設定ファイルに`faker_locale`オプションを追加することで、アプリケーションの Faker ロケールを設定できる
+
+サンプルコード
+`database/factories/ProductFactory.php`
+
+```php
+<?php
+
+namespace Database\Factories;
+
+use Illuminate\Database\Eloquent\Factories\Factory;
+
+/**
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Product>
+ */
+class ProductFactory extends Factory
+{
+    /**
+     * Define the model's default state.
+     *
+     * @return array<string, mixed>
+     */
+    public function definition()
+    {
+        return [
+            'name' => fake()->realText(),
+            'price' => fake()->randomNumber(7),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ];
+    }
+}
+
+```
+
+#### 日本語テキスト(`realText()`)
+
+- [FakerPHP 非公式リファレンス](https://fwhy.github.io/faker-docs/formatters/text/real_text.html)にある通り、日本語の自然な文章を扱うことも可能
+- `fake()->realText()`

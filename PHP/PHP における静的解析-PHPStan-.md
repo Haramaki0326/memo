@@ -1,4 +1,4 @@
-# PHP における静的解析-PHPStan,Larastan-
+# PHP における静的解析-`PHPStan`,`Larastan`-
 
 - PHP_CodeSniffer(phpcs)
 - PHPMD

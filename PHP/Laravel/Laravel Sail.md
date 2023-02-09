@@ -82,4 +82,6 @@ services:
   - 保存時に`PHP-CS-FIXER`の自動フォーマットを有効化するには VSCode の setting.json に PHP ファイルのフォーマッターを指定する必要がある
     - `"[php]": { "editor.defaultFormatter": "junstyle.php-cs-fixer" },`
   - `git` コマンド実行時に WSL だと`fatal: detected dubious ownership in repository`エラーが発生する場合があるのでその場合は、セーフディレクトリとして追加する対処をする。
+    - 結論：wsl 側の`.gitconfig`に`safe.directory=*`を追加する
+    - [git 2.35.2 ～ / config.lock failed いきなり git が使えなくなった - 2022 いそいで使った safe.directory](https://www.nda.co.jp/memo/git_safe_directory/)
     - [Git で「fatal: detected dubious ownership in repository」が出力されコミットできない場合](https://chigusa-web.com/blog/git-fatal-error/)
