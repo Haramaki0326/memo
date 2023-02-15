@@ -1,3 +1,443 @@
 # 認証について
 
-## Policy
+## `Middleware`
+
+`guest`または`auth`ミドルウェアが指定されている場合、以下のような処理が実行される
+
+- `guest`
+  - ログインしている場合：`HOME`にリダイレクト
+  - ログインしていない場合：本来の処理を実行
+    - ユーザ登録やログイン処理を行わせたい画面はこれを指定
+- `auth`
+  - ログインしている場合：本来の処理を実行
+    - 社内機能などはこれを指定
+  - ログインしていない場合：ログイン画面にリダイレクト
+
+**`web.php`**
+
+```php
+<?php
+
+use Illuminate\Support\Facades\Route;
+
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register web routes for your application. These
+| routes are loaded by the RouteServiceProvider within a group which
+| contains the "web" middleware group. Now create something great!
+|
+*/
+
+Route::get('/', function () {
+    return view('welcome');
+});
+
+Route::get('/dashboard', function () {
+    return view('dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
+
+require __DIR__.'/auth.php';
+```
+
+**`auth.php`**(`routes/auth.php`)
+
+```php
+<?php
+
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Auth\ConfirmablePasswordController;
+use App\Http\Controllers\Auth\EmailVerificationNotificationController;
+use App\Http\Controllers\Auth\EmailVerificationPromptController;
+use App\Http\Controllers\Auth\NewPasswordController;
+use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Auth\VerifyEmailController;
+use Illuminate\Support\Facades\Route;
+
+Route::middleware('guest')->group(function () {
+    Route::get('register', [RegisteredUserController::class, 'create'])
+                ->name('register');
+
+    Route::post('register', [RegisteredUserController::class, 'store']);
+
+    Route::get('login', [AuthenticatedSessionController::class, 'create'])
+                ->name('login');
+
+    Route::post('login', [AuthenticatedSessionController::class, 'store']);
+
+    Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
+                ->name('password.request');
+
+    Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])
+                ->name('password.email');
+
+    Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])
+                ->name('password.reset');
+
+    Route::post('reset-password', [NewPasswordController::class, 'store'])
+                ->name('password.update');
+});
+
+Route::middleware('auth')->group(function () {
+    Route::get('verify-email', [EmailVerificationPromptController::class, '__invoke'])
+                ->name('verification.notice');
+
+    Route::get('verify-email/{id}/{hash}', [VerifyEmailController::class, '__invoke'])
+                ->middleware(['signed', 'throttle:6,1'])
+                ->name('verification.verify');
+
+    Route::post('email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
+                ->middleware('throttle:6,1')
+                ->name('verification.send');
+
+    Route::get('confirm-password', [ConfirmablePasswordController::class, 'show'])
+                ->name('password.confirm');
+
+    Route::post('confirm-password', [ConfirmablePasswordController::class, 'store']);
+
+    Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
+                ->name('logout');
+});
+```
+
+**`Kernel.php`**
+
+```php
+<?php
+
+namespace App\Http;
+
+use Illuminate\Foundation\Http\Kernel as HttpKernel;
+
+class Kernel extends HttpKernel
+{
+  //省略
+
+    /**
+     * The application's route middleware.
+     *
+     * These middleware may be assigned to groups or used individually.
+     *
+     * @var array<string, class-string|string>
+     */
+    protected $routeMiddleware = [
+        'auth' => \App\Http\Middleware\Authenticate::class,
+  //省略
+        'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
+    ];
+}
+```
+
+**`guest`**(`app/Http/Middleware/RedirectIfAuthenticated.php`)
+
+- `Auth::guard()`を利用してチェックを行っている
+
+```php
+<?php
+
+namespace App\Http\Middleware;
+
+use App\Providers\RouteServiceProvider;
+use Closure;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
+class RedirectIfAuthenticated
+{
+    /**
+     * Handle an incoming request.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Closure(\Illuminate\Http\Request): (\Illuminate\Http\Response|\Illuminate\Http\RedirectResponse)  $next
+     * @param  string|null  ...$guards
+     * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
+     */
+    public function handle(Request $request, Closure $next, ...$guards)
+    {
+        $guards = empty($guards) ? [null] : $guards;
+
+        foreach ($guards as $guard) {
+            if (Auth::guard($guard)->check()) {
+                return redirect(RouteServiceProvider::HOME);
+            }
+        }
+
+        return $next($request);
+    }
+}
+
+```
+
+**`auth`**(`app/Http/Middleware/Authenticate.php`)
+
+```php
+<?php
+
+namespace App\Http\Middleware;
+
+use Illuminate\Auth\Middleware\Authenticate as Middleware;
+
+class Authenticate extends Middleware
+{
+    /**
+     * Get the path the user should be redirected to when they are not authenticated.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return string|null
+     */
+    protected function redirectTo($request)
+    {
+        if (! $request->expectsJson()) {
+            return route('login');
+        }
+    }
+}
+```
+
+## 認証に利用するテーブルを変更する
+
+- [【Laravel】既存テーブルで認証＆認証方法を差し替える Tips](https://zenn.dev/miyapei/articles/725316f6c52a579f2f00)
+- デフォルトは`\App\User`モデル（テーブル）
+- それを変更する方法は以下
+  - 認証に使用するテーブルを変更
+  - 認証に使用するモデルを変更
+
+### 認証に使用するテーブルを変更
+
+- `\App\User`クラスはそのまま利用し、そのクラスと対応するテーブルだけを変更する
+- なので'name', 'email', 'password'カラムはそのテーブルにもある必要がある？
+
+```php
+<?php
+
+namespace App;
+
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+
+class User extends Authenticatable
+{
+    use Notifiable;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
+    protected $fillable = [
+        'name', 'email', 'password',
+    ];
+
+    /**
+     * The attributes that should be hidden for arrays.
+     *
+     * @var array
+     */
+    protected $hidden = [
+        'password', 'remember_token',
+    ];
+
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $table = 'other_table'; // Laravel の命名規則に従っていないテーブルでも、明示的に指定すればOK
+}
+```
+
+### 認証に使用するモデルを変更
+
+- または、`\App\User` は一応 `users` テーブルのモデルなので、これを参考に新たにモデルを定義して利用することも可能
+- `\App\User` は `\Illuminate\Foundation\Auth\User` クラスを継承している（このクラスが認証に必要な機能を持つトレイトなどを使用している）
+- 変更したいモデルに対しても同じように`\Illuminate\Foundation\Auth\User` を継承させる。
+
+```php
+namespace App\Path\To\Models;
+
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+
+class Staff extends Authenticatable
+{
+    use Notifiable;
+
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $table = 'staff'; // Laravelの命名規則に従っていないテーブルでも、明示的に指定すればOK
+}
+```
+
+#### 作ったモデルを認証で使用するように指定
+
+- `config/auth.php`
+
+```php
+    'providers' => [
+        'users' => [
+            'driver' => 'eloquent',
+            //'model' => App\User::class,　// ここでモデルを指定しているので、
+            'model' => App\Path\To\Models\Staff::class, // 用意したモデルを使用するように変える
+        ],
+
+        // 'users' => [
+        //     'driver' => 'database',
+        //     'table' => 'users',
+        // ],
+    ],
+```
+
+#### テーブルの主キーが"id"ではない場合
+
+- Laravel では初期値としてテーブルの主キーが`id`という前提になっています。
+- そうではない場合は、テーブル名と同様に指定してあげれば OK
+- 仮に`code`というカラム名だとしたら以下のような感じ
+
+```php
+namespace App\Path\To\Models;
+
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+
+class Staff extends Authenticatable
+{
+    use Notifiable;
+
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $table = 'staff';
+
+    /**
+     * The primary key for the model.
+     *
+     * @var string
+     */
+    protected $primaryKey = 'code'; // これを追記
+}
+```
+
+- 文字列型だったり連番でなかったりでうまくいかない場合,オートインクリメントの設定もする
+
+```php
+    /**
+     * Indicates if the IDs are auto-incrementing.
+     *
+     * @var bool
+     */
+    public $incrementing = false; // デフォルトでは自動インクリメントが true になってるよ
+```
+
+#### ログインアカウントに使用するカラムの変更
+
+- ログイン ID のカラムの指定周りは`\Illuminate\Foundation\Auth\AuthenticatesUsers` というトレイトとして実装されており、`username()` というメソッドで一元管理されている
+- デフォルトでは`email`になっている
+- model や controller の`username()`にログイン ID として利用したいカラム名を記載すればよい
+
+```php
+<?php
+
+namespace App\Http\Controllers\Auth;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Foundation\Auth\AuthenticatesUsers;
+
+class LoginController extends Controller
+{
+    /*
+    |--------------------------------------------------------------------------
+    | Login Controller
+    |--------------------------------------------------------------------------
+    |
+    | This controller handles authenticating users for the application and
+    | redirecting them to your home screen. The controller uses a trait
+    | to conveniently provide its functionality to your applications.
+    |
+    */
+
+    use AuthenticatesUsers;
+
+    /**
+     * Where to redirect users after login.
+     *
+     * @var string
+     */
+    protected $redirectTo = '/home';
+
+    /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        $this->middleware('guest')->except('logout');
+    }
+
+    /**
+     * Illuminate\Foundation\Auth\AuthenticatesUsers
+     *
+     * Get the login username to be used by the controller.
+     *
+     * @return string
+     */
+    public function username() // このメソッドを追記
+    {
+        return 'login_account'; // 対象のカラム名に。後述するように view も変えます
+    }
+}
+```
+
+#### パスワードに使用するカラムの変更
+
+- パスワードのカラムの指定は`Illuminate\Auth\Authenticatable` というトレイトとして実装されている
+- `\App\User` などの認証用のユーザーテーブルのモデルが（親クラスの `Illuminate\Foundation\Auth\User` が）利用しています。
+- メソッドを経由してモデルが自身のパスワードの値を返すという形
+- デフォルトでは`password`になっています。
+
+```php
+namespace App\Path\To\Models;
+
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+
+class Staff extends Authenticatable
+{
+    use Notifiable;
+
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $table = 'staff';
+
+    /**
+     * The primary key for the model.
+     *
+     * @var string
+     */
+    protected $primaryKey = 'primary_key';
+
+    /**
+     * Get the password for the user.
+     *
+     * @return string
+     */
+    public function getAuthPassword() // これを追記
+    {
+        return $this->hash; // 対象のカラム名に
+    }
+}
+```
+
+## 認証するロジック自体を変更
